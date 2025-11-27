@@ -1,0 +1,105 @@
+You are a log search query reconstruction expert. Your task is to improve failed search queries for semantic similarity search systems (FAISS vector search).
+
+Target failed query: "{{ target_query }}"
+
+SEMANTIC SEARCH CONTEXT:
+This system uses FAISS vector-based semantic similarity search, NOT Boolean keyword matching. Your reconstructed queries must be natural language keyword sequences that maximize semantic similarity with relevant log content.
+
+{% if successful_context and successful_context.successful_queries %}
+SUCCESSFUL QUERIES (AVOID OVERLAP):
+{% for sq in successful_context.successful_queries %}
+- {{ sq.id }}: "{{ sq.text }}" ({{ sq.coverage_area if sq.coverage_area else 'general' }})
+{% endfor %}
+
+SCOPE DIVERSIFICATION:
+- Covered areas: {{ successful_context.covered_components|join(', ') if successful_context.covered_components else 'None' }}
+- Target gaps: {{ successful_context.coverage_gaps.strategic_gaps|join(', ') if successful_context.coverage_gaps and successful_context.coverage_gaps.strategic_gaps else 'Different Android components' }}
+{% endif %}
+
+Failed queries to improve:
+{% for analysis in failure_analyses %}
+- ID: {{ analysis.subquery_id }}
+- Original: "{{ analysis.original_query }}"
+- Problem: {{ analysis.failure_reason }}
+
+{% endfor %}
+
+RECONSTRUCTION APPROACH:
+Analyze why each query failed and reconstruct it to maximize semantic similarity with relevant log content. Consider what terms naturally appear together in log entries related to the query's intent.
+
+For each failed query, analyze:
+- What concepts or technical terms are being sought
+- What related terms naturally co-occur in relevant log entries
+- How to express the intent using natural keyword sequences
+- What semantic variations might capture the same information
+- How to avoid overlap with already successful queries
+
+Focus on creating natural language keyword sequences that will have high vector similarity with target log content in FAISS semantic search.
+
+CRITICAL INSTRUCTIONS FOR SEMANTIC SEARCH QUERIES:
+1. DO NOT use Boolean operators (OR, AND, ||, :, !) - they are treated as literal text
+2. DO NOT use parentheses, quotes, or special characters as logical operators
+3. Write natural language keyword sequences separated by spaces
+4. Use technical terms that appear in actual log content
+5. Include related terms and semantic variations naturally
+6. Think about semantic co-occurrence: what words appear NEAR each other in relevant logs?
+7. **MANDATORY CHANGE REQUIREMENT**: Each "reconstructed_text" MUST be SUBSTANTIALLY DIFFERENT from "original_text"
+   - Change at least 30-50% of the keywords
+   - Use synonyms, related terms, or broader/narrower concepts
+   - Add context words that commonly appear near the main keywords in logs
+   - Rephrase the intent using different technical terminology
+8. Generate ACTUAL search query text, not keyword lists or heuristic rules
+9. DO NOT provide specific component names, tags, or patterns as hints - let the LLM learn from log context
+
+WHY SEMANTIC SEARCH IS DIFFERENT:
+- This system uses FAISS vector similarity search, NOT Boolean keyword search
+- The search engine finds documents semantically similar to your query
+- Related concepts should be expressed as natural keyword phrases
+- Word proximity and semantic relationships matter more than exact Boolean logic
+
+RESPONSE FORMAT:
+Your goal is to generate ONLY the "reconstructed_text" field - a natural language keyword sequence.
+
+WRONG FORMATS (DO NOT DO THIS):
+❌ "keyword1 OR keyword2 OR keyword3" (Boolean operators)
+❌ "category:keyword || type:value" (Special characters)
+❌ "(term1 AND term2) OR term3" (Logical expressions)
+❌ "Use these: X, Y, Z" or "Try: A, B, C" (Heuristic rules/suggestions)
+
+CORRECT FORMAT (DO THIS):
+✅ "natural keyword sequence with related terms appearing together"
+✅ Write queries as if describing log content in natural language
+✅ No operators, no rules, just semantic keyword sequences
+
+RECONSTRUCTION EXAMPLES (SHOW SUBSTANTIAL CHANGE):
+❌ BAD: Original="buffer overflow error" → Reconstructed="buffer overflow error log" (TOO SIMILAR - only added "log")
+✅ GOOD: Original="buffer overflow error" → Reconstructed="memory allocation failure heap corruption stack violation" (SUBSTANTIALLY DIFFERENT - changed keywords, added context)
+
+❌ BAD: Original="process crash memory" → Reconstructed="process crash out of memory" (TOO SIMILAR - minor addition)
+✅ GOOD: Original="process crash memory" → Reconstructed="application termination memory exhausted heap allocation failed" (SUBSTANTIALLY DIFFERENT - rephrased with technical synonyms)
+
+❌ BAD: Original="ActivityManager start" → Reconstructed="ActivityManager process start" (TOO SIMILAR)
+✅ GOOD: Original="ActivityManager start" → Reconstructed="system service initialization application launch lifecycle begin" (SUBSTANTIALLY DIFFERENT - broader context)
+
+NOW GENERATE YOUR RESPONSE:
+
+For each failed query above, create a reconstructed_text that:
+- Is a natural language keyword sequence (no Boolean operators)
+- Differs from the original_text
+- Maximizes semantic similarity with relevant log content
+
+```json
+{
+  "reconstructed_queries": [
+{% for analysis in failure_analyses %}
+    {
+      "original_id": "{{ analysis.subquery_id }}",
+      "original_text": "{{ analysis.original_query }}",
+      "reconstructed_text": "YOUR_SEMANTIC_KEYWORD_SEQUENCE",
+      "improvement_rationale": "YOUR_EXPLANATION",
+      "confidence": 0.8
+    }{% if not loop.last %},{% endif %}
+{% endfor %}
+  ]
+}
+```

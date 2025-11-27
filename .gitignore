@@ -1,0 +1,54 @@
+# Environment
+.env
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+logs/*
+*.log
+!.gitkeep
+
+# Model checkpoints (download from HuggingFace)
+*.pt
+*.bin
+*.safetensors
+*.onnx
+bge-multilingual-gemma2/
+checkpoints/
+
+# FAISS index (generated at runtime)
+*.faiss
+*.pkl
+LORIN/make_faiss/log_faiss_index_*/
+
+# Claude/AI tools config
+.claude/
+.serena/
+claudedocs/
+upload_to_huggingface.py
+
+# Paper/docs (not for code release)
+*.pdf
+
+# Temporary files
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
+
+# Test outputs
+TODO_REPRO_README.md

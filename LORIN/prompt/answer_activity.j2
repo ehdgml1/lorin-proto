@@ -1,0 +1,67 @@
+# AOSP Log Activity Detection - Subquery Response
+
+## STEP 1: Evidence Verification (CRITICAL - DO THIS FIRST)
+
+Query: {{ query }}
+Available Evidence: {{ evidence_block if evidence_block else "(No retriever evidence)" }}
+
+**MANDATORY VERIFICATION BEFORE PROCEEDING**:
+1. Extract key entities from query (service names, components, activities)
+   - Example: "DropBoxManager", "MediaPlayer", "ActivityManager", "music playback"
+2. Search for these entities in the evidence text
+3. Decision rule:
+   - IF entity found in evidence → Proceed to STEP 2
+   - IF entity NOT found in evidence → Output EXACTLY: "No evidence found for [entity name] in the retrieved log ranges"
+   - NEVER proceed with analysis if entities are missing
+
+## STEP 2: Activity Location Identification (ONLY if STEP 1 passed)
+- Identify log lines where the specific activity/event OCCURRED
+- Locate activity start/completion markers
+- Find component interactions for the activity
+- Recognize lifecycle events and state transitions
+
+## STEP 3: Activity Response Synthesis (ONLY if STEP 1 passed)
+
+**CRITICAL FORMAT REQUIREMENT**:
+- IF evidence contains the activity: Use EXACTLY this format: line[X~Y] <activity description>
+- IF evidence does NOT contain the activity: Output "No evidence found for [activity] in retrieved logs"
+- Example (when found): line[100~129] Music playback activity initiated by MediaPlayer
+- Example (when NOT found): "No evidence found for DropBoxManager service in retrieved logs"
+- DO NOT use "Lines", "lines", "**Lines**", or any other variation
+- NEVER fabricate line ranges without direct evidence of the queried entity
+
+**Language**: English output required
+
+**Focus**: Developer-actionable log ranges showing WHERE activity occurred (only if evidence exists)
+
+## STEP 4: Activity-Focused Implementation
+
+{% if evidence_block %}
+**Evidence-Based Response**:
+1. First, verify if "{{ query }}" keywords/entities are present in the evidence
+2. If YES: Identify and recommend log line ranges where the activity/event occurred
+3. If NO: State clearly "No evidence found for {{ query }} in the retrieved log ranges"
+{% else %}
+**No Evidence Available**:
+Output: "No specific evidence available for {{ query }}. Unable to locate relevant log ranges without retrieval data."
+{% endif %}
+
+**Requirements**:
+- Use format: line[X~Y] <clear activity description>
+- Base descriptions ONLY on observed activity traces in the evidence
+- Describe WHAT activity IS PRESENT in the logs (not what might be present)
+- Focus on activity occurrence markers: started, created, resumed, completed, transitioned
+- Avoid speculative language (no "may", "likely", "possibly", "might", "could")
+- Avoid error/problem language (no "failed", "error", "crash") - those are for debug intent
+- **Analyze ALL documents in the evidence and provide activity location for EACH relevant document**
+- Each document represents a distinct log range - identify activity traces in every range
+- Explain WHY each range shows the activity using direct observations from that specific document
+- Include component names (MediaPlayer, ActivityManager, etc.) and lifecycle events (onCreate, onResume, etc.)
+- Focus on POSITIVE activity indicators (activity happened) not negative indicators (activity didn't happen)
+
+**Activity Markers to Look For**:
+- Component actions: "started", "created", "initialized", "launched"
+- Lifecycle events: "onCreate", "onStart", "onResume", "onPause", "onStop"
+- State transitions: "IDLE → ACTIVE", "STOPPED → PLAYING"
+- System events: "acquired focus", "registered listener", "opened connection"
+- Completion markers: "completed", "finished", "released", "destroyed"

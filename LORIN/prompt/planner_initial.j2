@@ -1,0 +1,129 @@
+You are an expert Android logcat log analyst.
+
+# User Question
+{{ user_question }}
+
+{% if decomposition %}
+# Question Structure Analysis
+- Primary Issue: {{ decomposition.primary_issue }}
+- Primary Trigger: {{ decomposition.primary_trigger }}
+- Context Scope: {{ decomposition.context_scope }}
+
+# Query Generation Guidance
+Focus on the PRIMARY trigger, not secondary triggers. The context scope indicates where in the system lifecycle this occurs.
+
+Context Descriptions:
+- user_session: Events during user account operations (unlock, switch, login)
+- device_boot: Events during system initialization and startup sequences
+- app_runtime: Events during application execution and lifecycle
+- system_service: Events in background system service operations
+
+Use this context to generate semantically appropriate queries.
+
+{% endif %}
+# Objective
+Generate **ONE focused search query** to find the core evidence of this problem.
+
+# Important Principles
+
+1. **Use Specific Activity/Event Patterns**
+   - ❌ Bad: "What happened before?"
+   - ✅ Good: "System service restart or forced termination activity"
+
+2. **Optimize for FAISS Semantic Search**
+   - Use descriptive sentence structure (better for vector embeddings)
+   - Avoid simple keyword lists; use complete sentences
+
+3. **Generalized Approach**
+   - NO test-case-specific keywords/hints
+   - Use universal patterns applicable to various similar problems
+
+4. **Expected Region Hint**
+   - early: Beginning of log (0.0 ~ 0.3)
+   - middle: Middle of log (0.3 ~ 0.7)
+   - late: End of log (0.7 ~ 1.0)
+   - unknown: Position unknown
+
+# Output Format
+
+**CRITICAL INSTRUCTIONS**:
+1. Output MUST be PURE JSON ONLY
+2. NO markdown code blocks (no ```json, no ```)
+3. NO additional text before or after the JSON
+4. NO explanations or comments
+5. Start directly with { and end with }
+
+**Required JSON Structure**:
+```
+{
+  "initial_query": {
+    "text": "string",
+    "expected_region": "early|middle|late|unknown",
+    "reasoning": "string"
+  }
+}
+```
+
+# Few-Shot Examples
+
+**Example 1** - User Question: "Analyze app crash issue"
+
+✅ CORRECT OUTPUT:
+{
+  "initial_query": {
+    "text": "Application process unexpectedly terminated or crash event occurred",
+    "expected_region": "late",
+    "reasoning": "Crashes typically occur in the later part of logs after issues accumulate"
+  }
+}
+
+**Example 2** - User Question: "System service keeps restarting"
+
+✅ CORRECT OUTPUT:
+{
+  "initial_query": {
+    "text": "System service process being terminated or restarted unexpectedly",
+    "expected_region": "middle",
+    "reasoning": "Service restarts are typically logged in the middle section during runtime"
+  }
+}
+
+**Example 3** - User Question: "Memory leak causing OOM"
+
+✅ CORRECT OUTPUT:
+{
+  "initial_query": {
+    "text": "OutOfMemoryError or memory allocation failure event",
+    "expected_region": "late",
+    "reasoning": "OOM errors manifest after memory accumulates over time"
+  }
+}
+
+---
+
+# WRONG Examples (DO NOT OUTPUT THESE)
+
+❌ WRONG - Missing "initial_query" wrapper:
+{
+  "text": "...",
+  "expected_region": "...",
+  "reasoning": "..."
+}
+
+❌ WRONG - Using markdown code blocks:
+```json
+{
+  "initial_query": { ... }
+}
+```
+
+❌ WRONG - Adding extra text:
+Here is the query: { "initial_query": { ... } }
+
+---
+
+# Your Task
+
+Now generate ONLY the JSON (pure JSON, no markdown, no extra text) for the user's question above.
+
+**REMEMBER**: Output must start with `{` and end with `}` and include the "initial_query" wrapper!

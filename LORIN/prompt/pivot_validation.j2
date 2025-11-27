@@ -1,0 +1,184 @@
+You are an expert Android logcat log analyst.
+
+# Task: Select the Most Relevant Pivot Document
+
+## User's Problem Context
+{% if primary_issue -%}
+**Primary Issue**: {{ primary_issue }}
+{% endif -%}
+
+## Initial Query Context (Primary Selection Criteria)
+**Query Text**: {{ initial_query_text }}
+**Expected Region**: {{ expected_region }}
+**Reasoning**: {{ initial_reasoning }}
+
+---
+
+**IMPORTANT**: Select the pivot based on relevance to the user's problem and initial query intent.
+Focus on document content that helps understand and debug the primary issue.
+
+## Top Pivot Candidates
+{% for candidate in candidates %}
+**Candidate {{ loop.index }}**:
+- **Position**: {{ "%.4f" | format(candidate.position) }} ({{ "%.1f" | format(candidate.position * 100) }}% through log)
+- **Line Number**: {{ candidate.line_number }}
+- **Content**:
+```
+{{ candidate.content }}
+```
+
+{% endfor %}
+
+---
+
+# Selection Criteria
+
+Your goal: Choose the candidate with **most relevant content** to understand and debug the user's problem.
+
+## 1. Content Relevance (PRIMARY CRITERION)
+- Does the candidate's content directly address the primary issue?
+- Does it contain diagnostic information relevant to the user's question?
+- Does it show the problem occurrence, related system state, or causal events?
+- Which candidate provides the most useful context for understanding the issue?
+
+## 2. Temporal Alignment (Secondary Consideration)
+
+**Log Size**: {{ total_lines }} lines
+
+**Adaptive Temporal Zones**:
+{% if total_lines < 50000 -%}
+**Small log** (< 50K lines): 1% = ~{{ (total_lines * 0.01)|int }} lines
+- **early**: 0.0-0.35 (0-35% of log) - initialization, boot, early events
+- **mid**: 0.35-0.75 (35-75% of log) - runtime operations, session activity
+- **late**: 0.75-1.0 (75-100% of log) - shutdown, resource exhaustion, late events
+{% elif total_lines < 100000 -%}
+**Medium log** (50K-100K lines): 1% = ~{{ (total_lines * 0.01)|int }} lines
+- **early**: 0.0-0.25 (0-25% of log) - initialization, boot, early events
+- **mid**: 0.40-0.70 (40-70% of log) - runtime operations, session activity
+- **late**: 0.85-1.0 (85-100% of log) - shutdown, resource exhaustion, late events
+{% else -%}
+**Large log** (> 100K lines): 1% = ~{{ (total_lines * 0.01)|int }} lines
+- **early**: 0.0-0.20 (0-20% of log) - initialization, boot, early events
+- **mid**: 0.45-0.65 (45-65% of log) - runtime operations, session activity
+- **late**: 0.90-1.0 (90-100% of log) - shutdown, resource exhaustion, late events
+{% endif %}
+
+**Temporal zones are provided for context only - they should NOT be the primary decision factor.**
+
+Use temporal position to understand:
+- When this log event occurred in the overall log timeline
+- Whether it's from initialization, runtime, or shutdown phase
+
+**Example Decision Logic**:
+```
+Expected region: {{ expected_region }}
+Candidate A: position=0.71 (late zone) - Contains actual problem occurrence with diagnostic details
+Candidate B: position=0.37 (mid zone) - Contains normal operations, less relevant
+→ CHOOSE A: Content relevance is more important than temporal zone matching
+```
+
+## 3. Causal Logic (CRITICAL)
+**If looking for CAUSES** (crash, error, failure, problem occurrence):
+- ✅ Choose: The problem event itself (exception, error, failure point)
+- ❌ Avoid: Aftermath/consequences (boot logs, recovery, "after reboot" content)
+- Example: Query = "crash before reboot" → Choose crash logs, NOT boot logs
+
+**If looking for EFFECTS** (recovery, boot, aftermath):
+- ✅ Choose: The effect/recovery event itself
+- ❌ Avoid: The original problem that caused it
+
+## 4. Content Quality
+- Which candidate has the most diagnostic information?
+- Which provides better context for generating expansion queries?
+
+---
+
+# Common Pitfalls to Avoid
+
+❌ **Temporal Zone Bias**:
+- Don't prioritize temporal zone matching over content relevance
+- A candidate in the "wrong" zone with relevant content is better than one in the "right" zone with irrelevant content
+
+❌ **Semantic Similarity Trap**:
+- Boot logs contain keywords like "Watchdog", "SystemServer", "service starting"
+- But boot = AFTERMATH (after reboot), not CAUSE (before reboot)
+- Don't be fooled by keyword overlap - understand temporal causality
+
+❌ **Keyword Matching Only**:
+- Don't select based on keyword count alone
+- Understand the context and diagnostic value of the content
+
+---
+
+# Output Format
+
+Pure JSON only (NO markdown, NO ```json, NO extra text):
+```
+{
+  "selected_candidate": 1,
+  "reasoning": "Concise explanation (2-3 sentences) focusing on intent alignment and causal logic",
+  "temporal_analysis": "How this candidate's position relates to expected_region and query intent",
+  "rejected_reasons": {
+    "2": "Brief reason (1 sentence)",
+    "3": "Brief reason (1 sentence)"
+  }
+}
+```
+
+---
+
+# Examples
+
+## Example 1: Crash Analysis (Choose Cause, NOT Aftermath)
+
+**Query**: "System server crash immediately before unexpected reboot"
+**Expected Region**: "late"
+
+**Candidates**:
+1. Position 0.7500: "FATAL EXCEPTION in system_server... OutOfMemoryError"
+2. Position 0.8079: "Starting boot services... mBootCompleted=false"
+3. Position 0.3200: "Normal background activity"
+
+**Correct Selection**:
+```
+{
+  "selected_candidate": 1,
+  "reasoning": "Candidate 1 contains the actual crash (FATAL EXCEPTION) that caused the reboot. Candidate 2 shows boot logs AFTER the reboot (aftermath), not the crash cause.",
+  "temporal_analysis": "Position 0.7500 is late in log, matching expected_region. Candidate 2 at 0.8079 is POST-reboot recovery.",
+  "rejected_reasons": {
+    "2": "Boot logs are aftermath of reboot, not the crash cause we're looking for",
+    "3": "Too early (0.32) and contains normal activity, not crash event"
+  }
+}
+```
+
+## Example 2: Boot Analysis (Choose Effect, NOT Cause)
+
+**Query**: "System boot sequence and service initialization after crash recovery"
+**Expected Region**: "late"
+
+**Candidates**:
+1. Position 0.8079: "Starting boot services... StartLocaleManagerService"
+2. Position 0.7500: "FATAL EXCEPTION... crash before reboot"
+3. Position 0.6200: "Memory pressure warnings"
+
+**Correct Selection**:
+```
+{
+  "selected_candidate": 1,
+  "reasoning": "Query explicitly asks for boot sequence (effect). Candidate 1 shows service initialization during boot, which IS the recovery process we want to analyze.",
+  "temporal_analysis": "Position 0.8079 is post-reboot boot sequence, matching the 'after crash recovery' intent.",
+  "rejected_reasons": {
+    "2": "This is the pre-reboot crash (cause), not the boot sequence (effect) we're analyzing",
+    "3": "Pre-crash warnings, not the boot sequence"
+  }
+}
+```
+
+---
+
+# Generate Selection Now
+
+Analyze the {{ candidates|length }} candidates above and select the pivot that best matches the initial query's intent and temporal logic.
+
+**REMEMBER**: If looking for a CAUSE (crash, error), choose the problem itself, NOT the aftermath (boot, recovery).

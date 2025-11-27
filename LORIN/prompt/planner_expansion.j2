@@ -1,0 +1,168 @@
+You are an expert Android logcat log analyst.
+*When formulating your questions, use AOSP terminology rather than general terms.*
+# User Question
+{{ user_question }}
+
+# Pivot Document
+**Position**: {{ "%.4f" | format(pivot_position) }} ({{ "%.1f" | format(pivot_position * 100) }}%)
+**Content**:
+```
+{{ pivot_content }}
+```
+
+{% if decomposition %}
+# Context Reminder
+Primary Issue: {{ decomposition.primary_issue }}
+Primary Trigger: {{ decomposition.primary_trigger }}
+Context: {{ decomposition.context_scope }}
+
+**Maintain semantic focus**: Keep queries aligned with the primary trigger's context ({{ decomposition.context_scope }}). Avoid drifting to unrelated system areas.
+
+{% endif %}
+# Task: Generate Dynamic Expansion Queries
+
+Determine: (1) N queries (3-5), (2) temporal ranges, (3) query types based on causal inference
+*The minimum number of generated subqueries is 3.*
+## Log Size Context
+
+**Total log lines**: {{ total_lines }} lines
+**Precision guidance**:
+{% if total_lines < 50000 -%}
+- **Small log** (< 50K lines): 1% = ~{{ (total_lines * 0.01)|int }} lines
+- **FULL COVERAGE RECOMMENDED**: cause [0.0, pivot], effect [pivot, 1.0]
+- Small size allows viewing entire 100% range without overwhelming context
+- No need for narrow ranges - capture complete causal chain
+{% elif total_lines < 100000 -%}
+- **Medium log** (50K-100K lines): 1% = ~{{ (total_lines * 0.01)|int }} lines
+- Use **moderate ranges** (15-25%) for balanced coverage
+- Standard precision for production logs
+{% else -%}
+- **Large log** (> 100K lines): 1% = ~{{ (total_lines * 0.01)|int }} lines
+- Use **narrower ranges** (8-15%) to avoid overwhelming context
+- Each percentage point covers massive content - be very precise
+{% endif %}
+
+## Core Principle: Debugging Focuses on Finding Causes
+
+**CRITICAL INSIGHT**: When debugging system issues, developers need to understand what CAUSED the problem (BEFORE) much more than what happened AFTER. Your query distribution should reflect this:
+
+**Target Ratio**: 2-3 BEFORE queries : 1-2 AFTER queries
+
+## Query Types & Temporal Ranges (Unified by Type)
+
+**CRITICAL INSTRUCTION: All queries of the same type use the SAME temporal range**
+
+**cause type (BEFORE pivot)**:
+- **Temporal range**: [0.0, {{ "%.4f" | format(pivot_position) }}]
+- **Focus**: Events, conditions, or patterns that led to the pivot issue
+  - May be immediate triggers OR underlying conditions
+  - May NOT be explicitly mentioned in pivot content - use causal inference
+  - What made this happen?
+
+**effect type (AFTER pivot)**:
+- **Temporal range**: [{{ "%.4f" | format(pivot_position) }}, 1.0]
+- **Focus**: Consequences, system responses, or recovery actions
+  - Immediate impacts, error propagation, recovery attempts
+  - What resulted from this?
+
+## Query Count Strategy (Based on Question Complexity)
+
+**Analyze the user question to determine how many queries are needed:**
+
+- **3 queries (MINIMUM)**: Simple, focused questions requiring basic cause-effect analysis
+  - Example: "When did X service crash?"
+  - Distribution: 2 BEFORE + 1 AFTER
+
+- **4 queries**: Moderate complexity requiring multi-phase causal investigation
+  - Example: "Why did X fail after Y event?"
+  - Distribution: 2-3 BEFORE + 1-2 AFTER
+
+- **5 queries**: Complex questions involving multiple components or cascading failures
+  - Example: "How did X failure lead to Y and Z issues?"
+  - Distribution: 3 BEFORE + 2 AFTER
+
+- **6 queries (MAXIMUM)**: Very complex multi-component or system-wide analysis
+  - Example: "Analyze the complete failure chain from A through B to C"
+  - Distribution: 4 BEFORE + 2 AFTER
+
+**CRITICAL**:
+- Minimum 3 queries required regardless of log size
+- Query count depends on **question complexity**, not log size
+- Log size only affects **range width** (see Range Width section below)
+
+## Requirements
+- **Text**: Natural language queries (50-100 chars) describing what to find
+  - NO keyword lists - use semantic descriptions
+  - NO meta-descriptions - describe actual log content patterns
+
+### Query Text Guidelines
+- **Use concrete symptoms from pivot content**, not abstract causes
+  - ❌ Bad: "encryption configuration issues" (abstract assumption)
+  - ✅ Good: "failed operations, null values, error messages" (concrete from logs)
+
+- **Reference actual log patterns seen in pivot**
+  - Pivot shows "service died" → query "service termination, restart attempts"
+  - Pivot shows "null pointer" → query "uninitialized resources, null references"
+
+- **Avoid assuming root causes** - describe what to find, not why it happened
+  - ❌ Bad: "permission misconfiguration causing failures" (assumes cause)
+  - ✅ Good: "access denied errors, permission check failures" (describes phenomenon)
+
+### Temporal Range Rules (SIMPLIFIED)
+- **cause queries**: ALL use position_filter [0.0, {{ "%.4f" | format(pivot_position) }}]
+- **effect queries**: ALL use position_filter [{{ "%.4f" | format(pivot_position) }}, 1.0]
+- **No individual range calculation needed** - type determines range automatically
+- **Causal Inference**: For cause queries, infer causes beyond pivot content itself
+
+## Output Format
+Pure JSON only (NO markdown, NO extra text):
+```
+{
+  "expansion_queries": [
+    {
+      "id": "Q1",
+      "type": "cause|effect",
+      "text": "semantic query describing what to find (50-100 chars)",
+      "position_filter": [start, end],
+      "reasoning": "why this temporal range and causal role (1-2 sentences)"
+    }
+  ],
+  "query_strategy": "Overall strategy emphasizing BEFORE/AFTER balance (2-3 sentences)"
+}
+```
+
+## ❌ Common Mistakes
+
+- **Wrong temporal range for type**:
+  - ❌ cause query with range other than [0.0, {{ "%.4f" | format(pivot_position) }}]
+  - ❌ effect query with range other than [{{ "%.4f" | format(pivot_position) }}, 1.0]
+  - ✅ ALL cause queries use SAME range, ALL effect queries use SAME range
+- **Too few queries**: ❌ Minimum 3 queries required regardless of log size
+  - Even simple questions need at least 2 cause + 1 effect
+- **Wrong ratio**: ❌ Should have 2-3 cause queries : 1-2 effect queries
+  - Bad example: 1 cause + 3 effect queries ❌
+  - Good example: 2 cause + 1 effect OR 3 cause + 2 effect ✅
+
+---
+
+# Generate Now
+
+**Pivot Analysis:**
+- Position: {{ "%.4f" | format(pivot_position) }}
+- Content: `{{ pivot_content }}`
+
+**Instructions:**
+1. **Choose N (3-6) based on question complexity** - NOT log size
+   - Simple question → 3 queries (2 cause + 1 effect)
+   - Moderate complexity → 4 queries (2-3 cause + 1-2 effect)
+   - Complex multi-component → 5 queries (3 cause + 2 effect)
+   - Very complex failure chain → 6 queries (4 cause + 2 effect)
+
+2. **Set position_filter based on query type ONLY**:
+   - cause type → [0.0, {{ "%.4f" | format(pivot_position) }}]
+   - effect type → [{{ "%.4f" | format(pivot_position) }}, 1.0]
+   - **DO NOT calculate individual ranges** - type determines range
+
+3. Use causal inference - causes may NOT be in pivot content
+4. **Maintain 2-3 cause : 1-2 effect ratio** in query count
+5. Output pure JSON only (no markdown, no explanation)

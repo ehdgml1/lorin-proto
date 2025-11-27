@@ -1,0 +1,54 @@
+# AOSP Log Subquery Intelligence Analysis
+
+**CRITICAL**: Your response MUST contain ONLY a valid JSON object wrapped in ```json code blocks.
+
+## Analysis Context
+**Original User Question**: {{ user_question }}
+**Failed Subquery**: {{ original_query }} (ID: {{ subquery_context.get('id', 'unknown') }}, Score: {{ "%.2f"|format(confidence_score) }})
+
+**Quality Evaluation Feedback**:
+- **Assessment**: {{ evaluation_details.reasoning }}
+{% if evaluation_details.improvement_suggestions %}
+- **Improvement Suggestions**: {{ evaluation_details.improvement_suggestions }}
+{% endif %}
+{% if evaluation_details.query_effectiveness %}
+- **Query Effectiveness**: {{ evaluation_details.query_effectiveness }}
+{% endif %}
+
+## Intelligent Analysis Task
+
+Analyze why this subquery failed to meet quality standards for AOSP log retrieval. Use your understanding of:
+- AOSP system architecture and logging patterns
+- The relationship between the user's question and the subquery
+- Quality evaluation feedback to identify improvement opportunities
+- Log retrieval effectiveness patterns
+
+Based on this analysis, provide intelligent recommendations for reconstruction.
+
+## MANDATORY JSON OUTPUT FORMAT
+You MUST respond with EXACTLY this JSON structure wrapped in ```json blocks:
+
+```json
+{
+  "subquery_id": "{{ subquery_context.get('id', 'unknown') }}",
+  "original_query": "{{ original_query }}",
+  "failure_type": "Your categorization of the failure type (e.g., relevance_too_low, coverage_insufficient, specificity_lacking, context_mismatch, ambiguity_high, domain_misalignment)",
+  "failure_reason": "Your intelligent analysis of the core failure reasons and patterns",
+  "confidence_score": {{ confidence_score }},
+  "suggested_improvements": [
+    "Your analysis-driven improvement suggestions - provide as many as needed"
+  ],
+  "context_hints": [
+    "Your recommendations for better AOSP context targeting and technical query improvements"
+  ]
+}
+```
+
+**INTELLIGENCE GUIDELINES**:
+1. Respond ONLY with the JSON object in code blocks
+2. NO additional text before or after JSON
+3. ALL string values must be properly escaped
+4. Use your understanding to provide meaningful analysis, not predefined categories
+5. Provide as many improvements as your analysis suggests (not forced quantities)
+6. Focus on actionable, specific recommendations based on AOSP domain knowledge
+7. Let your analysis determine the structure and content of suggestions

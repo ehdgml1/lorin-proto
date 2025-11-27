@@ -1,0 +1,388 @@
+# AOSP Log Query Planning (Tree of Thought + Temporal Awareness)
+
+**Question**: {{ user_question }}
+**Generate**: {{ min_queries }}-{{ max_queries }} English queries
+
+---
+
+## Meta-Cognitive Reasoning Process
+
+### Step 1: Temporal Context Extraction
+
+**Analyze the temporal characteristics of the problem:**
+
+**Ask yourself these questions:**
+
+1. **Is this a single-occurrence or recurring problem?**
+   - Single occurrence: Happens once at a specific point in time
+   - Recurring: Repeats multiple times throughout the log
+
+2. **What is the time scope of the problem?**
+   - Localized: Confined to a specific phase (startup, shutdown, specific operation)
+   - Distributed: Spans across multiple phases or entire timeline
+
+3. **Based on the problem description, when would evidence appear?**
+   - Think about the nature of the problem
+   - Consider what system states would produce relevant logs
+   - Don't rely on specific keywords - understand the problem semantics
+
+**Determine temporal_region based on your analysis:**
+- EARLY (0-30%): Single-occurrence problems at system startup/initialization
+- MIDDLE (30-70%): Problems during steady-state operation
+- LATE (70-100%): Problems during shutdown or after extended runtime
+- ALL: Recurring problems, loops, or problems spanning entire timeline
+
+**Question Analysis**: {{ user_question }}
+**Temporal Region**: [State EARLY/MIDDLE/LATE/ALL and explain your reasoning based on problem characteristics, not keywords]
+
+---
+
+### Step 2: Problem Structure Analysis (Causal Chain)
+
+**Break the problem into causal phases:**
+
+All system failures follow this universal pattern:
+1. **TRIGGER**: What initiated the problem? (Root cause)
+2. **MANIFESTATION**: How did the problem appear in system behavior? (Symptoms)
+3. **RESPONSE**: How did the system react? (Immediate handling)
+4. **OUTCOME**: What was the result? (Recovery success/failure/recurrence)
+5. **EVIDENCE**: What diagnostic information exists? (Stack traces, detailed errors)
+
+**For each phase, identify:**
+- What aspect of the problem it addresses
+- Where in the log timeline it likely appears
+- Why it matters for debugging
+
+---
+
+### Step 3: Generate Phase-Based Subqueries
+
+**For each causal phase, create a temporally-aware natural language query:**
+
+**Format**: "In the [TEMPORAL_REGION], find [SEMANTIC_DESCRIPTION] to [PURPOSE]"
+
+**Rules (CRITICAL):**
+
+❌ **DO NOT use specific error keywords:**
+- Avoid: "exception", "crash", "timeout", "error", "ANR", "NullPointerException"
+- Reason: These appear throughout logs, not just in relevant sections
+
+✅ **DO use semantic descriptions:**
+- Use: "abnormal termination", "system response to failure", "recovery mechanism", "diagnostic information"
+- Reason: Describes what happened, not specific error types
+
+✅ **DO include temporal constraints:**
+- Use: "in early logs", "first occurrence", "initial phase", "during startup period"
+- Reason: Guides retrieval to correct timeline position
+
+✅ **DO focus on causal relationships:**
+- Use: "what caused", "how system responded", "what followed", "evidence of why"
+- Reason: Connects events in cause-effect chain
+
+✅ **DO vary abstraction levels:**
+- Mix overview queries ("what initiated failure") with detail queries ("diagnostic traces")
+- Reason: Captures both high-level and detailed information
+
+---
+
+### Step 4: Multi-Dimensional Diversity Enforcement
+
+**CRITICAL: Subqueries MUST explore the problem from multiple independent dimensions**
+
+Think of this as exploring a 3D space: **Temporal × Causal × Abstraction**
+
+#### Dimension 1: Temporal Distribution (MANDATORY)
+
+**For temporal_region = "ALL" (Recurring/Distributed problems):**
+- ✅ **REQUIRED**: At least 1 query in EARLY (0-30%)
+- ✅ **REQUIRED**: At least 1 query in MIDDLE (30-70%)
+- ✅ **REQUIRED**: At least 1 query in LATE (70-100%)
+- ✅ **REQUIRED**: At least 1 query spanning multiple regions
+- ❌ **FORBIDDEN**: More than 2 queries in the same 20% range
+
+**For temporal_region = "EARLY/MIDDLE/LATE" (Localized problems):**
+- ✅ **REQUIRED**: Queries must vary by at least 10% within that region
+- Example: If EARLY, distribute across 0-10%, 10-20%, 20-30%
+
+#### Dimension 2: Causal Phase Coverage (MANDATORY)
+
+**REQUIRED minimum distribution across phases:**
+- At least 1 query addressing **TRIGGER** (root cause identification)
+- At least 1 query addressing **MANIFESTATION** (symptom observation)
+- At least 1 query addressing **OUTCOME** (consequence analysis)
+- At least 1 query addressing **EVIDENCE** (diagnostic data)
+
+**Note**: RESPONSE phase is optional but recommended for complex failures
+
+#### Dimension 3: Abstraction Level Diversity (MANDATORY)
+
+**REQUIRED: Mix these 3 abstraction levels:**
+
+1. **Overview Level** (1-2 queries):
+   - "What is the overall pattern of failure?"
+   - "How does the system behave during this problem?"
+   - Captures high-level system state and behavior patterns
+
+2. **Detail Level** (2-3 queries):
+   - "What specific component failed and how?"
+   - "What are the exact error conditions and stack traces?"
+   - Captures specific technical details and error information
+
+3. **Meta Level** (1 query):
+   - "What systemic factors enabled this failure?"
+   - "What is missing or unexpected in the log sequence?"
+   - Captures gaps, anomalies, and contextual factors
+
+#### Recursive Thinking Pattern
+
+**Each query should reflect on what OTHER queries might miss:**
+
+- **Temporal Recursion**: "If I only looked at EARLY, what would I miss in MIDDLE/LATE?"
+- **Causal Recursion**: "If I only found symptoms, what caused them? What were consequences?"
+- **Abstraction Recursion**: "If I only see details, what's the big picture? If I only see overview, what are specifics?"
+
+**Example of recursive thinking:**
+```
+Q1 [EARLY, TRIGGER, Detail]: "In the initial 20% of logs, find the specific component initialization that failed"
+↓ Recursive reflection: "But what if the failure persisted or repeated?"
+Q2 [MIDDLE, OUTCOME, Detail]: "In the middle 40-60% range, find evidence of repeated failure attempts"
+↓ Recursive reflection: "What's the overall system behavior pattern?"
+Q3 [ALL, MANIFESTATION, Overview]: "Across the entire timeline, identify the recurring pattern of system response to failures"
+↓ Recursive reflection: "What contextual factors enabled this?"
+Q4 [LATE, EVIDENCE, Meta]: "In the final 20% of logs, find what diagnostic information reveals about systemic conditions"
+```
+
+#### Validation Rules (STRICT)
+
+**Before finalizing, verify ALL of these:**
+
+1. ✅ Temporal diversity: Queries span ≥3 different temporal regions (for ALL) or ≥3 sub-ranges (for localized)
+2. ✅ Causal diversity: Cover ≥3 different causal phases
+3. ✅ Abstraction diversity: Include Overview + Detail + Meta levels
+4. ✅ No temporal clustering: No more than 2 queries within same 20% range
+5. ✅ No causal clustering: No more than 2 queries on same causal phase
+6. ✅ Complementary information: Each query provides unique diagnostic value
+
+**If any validation fails, REGENERATE queries until all pass**
+
+---
+
+## Output Format
+
+```
+Planning Results (PLANNING PREPROCESS)
+[Premise] {{ assumptions_line }}
+[Question] {{ user_question }}
+[Temporal Analysis] Temporal Region: [EARLY/MIDDLE/LATE/ALL]
+[Reasoning] This problem occurs [when/where in timeline] because [brief causal analysis]
+
+[Subqueries (JSON)]
+{
+  "temporal_context": {
+    "region": "[EARLY|MIDDLE|LATE|ALL based on your Step 1 analysis]",
+    "reasoning": "[Explain why this temporal focus matches the problem characteristics]"
+  },
+  "subqueries": [
+    {
+      "id": "Q1",
+      "phase": "[TRIGGER|MANIFESTATION|RESPONSE|OUTCOME|EVIDENCE]",
+      "text": "[Natural language query with temporal constraint and semantic description]",
+      "type": "{{ 'anchor' if force_anchor else 'retrieve' }}",
+      "intent": "retrieve",
+      "temporal_constraint": "[Specific region like 'EARLY (0-20%)', 'MIDDLE (40-60%)', 'LATE (70-90%)', or 'ALL']",
+      "abstraction_level": "[Overview|Detail|Meta]",
+      "causal_role": "[What aspect of the causal chain this addresses]",
+      "output": "expected: [what type of information this query should retrieve]",
+      "recursive_rationale": "[What perspective does this add that other queries miss?]"
+    }
+    // ... Generate {{ min_queries }}-{{ max_queries }} subqueries
+    //
+    // CRITICAL DIVERSITY REQUIREMENTS:
+    // 1. Temporal: If region="ALL", MUST have ≥1 query in EARLY, ≥1 in MIDDLE, ≥1 in LATE
+    // 2. Causal: MUST cover ≥3 different phases (TRIGGER, MANIFESTATION, OUTCOME, EVIDENCE)
+    // 3. Abstraction: MUST include Overview + Detail + Meta levels
+    // 4. No clustering: Maximum 2 queries within same 20% temporal range
+    // 5. Each query must add unique diagnostic value through recursive reflection
+  ],
+  "diversity_validation": {
+    "temporal_coverage": "[List which temporal ranges are covered: e.g., 'EARLY(0-20%), MIDDLE(40-60%), LATE(70-90%), ALL']",
+    "causal_coverage": "[List which phases are covered: e.g., 'TRIGGER, MANIFESTATION, OUTCOME, EVIDENCE']",
+    "abstraction_coverage": "[List levels used: e.g., 'Overview×1, Detail×3, Meta×1']",
+    "clustering_check": "✅ No more than 2 queries per 20% range",
+    "complementarity_check": "✅ Each query provides unique perspective through recursive thinking"
+  },
+  "notes": [
+    "[Brief notes about your query design strategy]"
+  ],
+  "assumptions": [
+    "{{ assumptions_line }}"
+  ]
+}
+```
+
+---
+
+## Query Design Principles
+
+### ❌ Avoid These Patterns
+
+**Keyword Dependency:**
+- Don't: Rely on specific error keywords ("crash", "exception", "ANR")
+- Why: Keywords appear throughout logs, not just relevant sections
+- Keywords may not match actual error types in this specific case
+
+**Missing Temporal Context:**
+- Don't: Queries without time constraints
+- Why: Retrieval will search entire log, returning irrelevant results
+- Always specify temporal region appropriate to the problem
+
+**Temporal Mismatch:**
+- Don't: All queries targeting same region when problem spans timeline
+- Why: Misses evidence in other temporal regions
+- Match temporal distribution to problem characteristics (Step 1 analysis)
+
+### ✅ Follow These Principles
+
+**Semantic Description:**
+- Use behavioral descriptions ("abnormal termination", "system response")
+- Describe what happened, not specific error types
+- Allows generalization across different failure modes
+
+**Appropriate Temporal Constraints:**
+- Match constraint to when evidence would appear
+- For recurring problems: Distribute queries across timeline
+- For single-occurrence: Focus on relevant phase
+
+**Causal Structure:**
+- Each query addresses specific part of causal chain
+- Queries build upon each other (trigger → response → outcome)
+- Clear diagnostic purpose for each query
+
+---
+
+## Validation Guidelines
+
+**Before finalizing subqueries, verify ALL dimensions:**
+
+### 1. Multi-Dimensional Coverage (MANDATORY)
+
+**Temporal Dimension:**
+- ✅ For region="ALL": Span EARLY, MIDDLE, LATE (minimum 1 query each)
+- ✅ For localized region: Vary by ≥10% within region
+- ✅ No more than 2 queries in same 20% range
+- ✅ At least 1 query spanning multiple regions for holistic view
+
+**Causal Dimension:**
+- ✅ Cover ≥3 phases: TRIGGER, MANIFESTATION, OUTCOME, EVIDENCE
+- ✅ No more than 2 queries on same phase
+- ✅ Phases form logical diagnostic chain
+
+**Abstraction Dimension:**
+- ✅ Include Overview (1-2 queries): Big picture, patterns, behavior
+- ✅ Include Detail (2-3 queries): Specific components, errors, traces
+- ✅ Include Meta (1 query): Systemic factors, gaps, anomalies
+
+### 2. Recursive Thinking Quality
+
+**Each query must answer:**
+- What unique perspective does this provide?
+- What would be missed if this query didn't exist?
+- How does this complement other queries?
+
+**Recursive connections:**
+- Temporal: Early → Middle → Late progression or distributed sampling
+- Causal: Cause → Effect → Consequence chain
+- Abstraction: Overview → Detail → Meta synthesis
+
+### 3. Independence and Complementarity
+
+**Independence:**
+- ✅ No queries asking the same thing with different words
+- ✅ Each query targets different aspect of problem space
+- ✅ Queries don't overlap in information retrieved
+
+**Complementarity:**
+- ✅ Queries together form complete diagnostic picture
+- ✅ Information from all queries combines synergistically
+- ✅ No critical diagnostic aspect left unexamined
+
+### 4. Keyword Independence (Anti-Bias)
+
+- ✅ Queries use semantic descriptions, not error keywords
+- ✅ Will work even if specific error types differ from expectations
+- ✅ Focus on behaviors and system states, not specific terms
+
+### 5. Diagnostic Value
+
+- ✅ Each query serves clear purpose for debugging
+- ✅ Results will provide actionable information
+- ✅ Coverage spans root cause, symptoms, and consequences
+
+**If ANY validation fails, REGENERATE queries until all pass**
+
+---
+
+## Critical Reminders
+
+### Core Principles
+
+1. **Multi-Dimensional Exploration is MANDATORY**
+   - Every problem MUST be explored across 3 dimensions: Temporal × Causal × Abstraction
+   - This is NOT optional - it's the core methodology
+   - Think: "Am I seeing this problem from enough different angles?"
+
+2. **Diversity is Enforced, Not Recommended**
+   - Minimum requirements for temporal, causal, and abstraction coverage MUST be met
+   - Clustering violations MUST be avoided (max 2 queries per 20% range)
+   - If diversity rules fail, REGENERATE queries
+
+3. **Recursive Thinking Creates Parallel-Recursive Effect**
+   - Each query should ask: "What do other queries miss?"
+   - Temporal recursion: "What if the problem spans beyond this phase?"
+   - Causal recursion: "What caused this? What were consequences?"
+   - Abstraction recursion: "What's the bigger picture? What are specifics?"
+
+### Anti-Bias Principles
+
+4. **No Keyword Bias**
+   - NEVER rely on specific error keywords ("crash", "exception", "ANR")
+   - Use semantic descriptions of behaviors and system states
+   - Ensures queries work across different failure modes
+
+5. **No Temporal Bias**
+   - Don't assume problems are localized to EARLY just because of "startup" keywords
+   - Analyze problem characteristics (single-occurrence vs recurring) first
+   - For recurring problems: DISTRIBUTE queries, don't cluster them
+
+6. **No Abstraction Bias**
+   - Don't focus only on details or only on overview
+   - MUST include Overview (patterns), Detail (specifics), Meta (systemic factors)
+   - Different abstraction levels reveal different aspects
+
+### Execution Discipline
+
+7. **Validate Before Finalizing**
+   - Check ALL 6 validation rules from Validation Guidelines
+   - If any rule fails, REGENERATE queries
+   - Don't proceed with incomplete or biased query sets
+
+8. **Ensure Complementarity**
+   - Queries should form a complete diagnostic picture together
+   - No information overlap, no redundancy
+   - Each query adds unique value through recursive perspective
+
+9. **Maintain Diagnostic Focus**
+   - Every query must serve clear debugging purpose
+   - Results must provide actionable information
+   - Coverage must span root cause, symptoms, consequences
+
+### Remember
+
+**The goal is parallel execution with recursive depth:**
+- Queries execute in parallel (efficiency)
+- But each query reflects recursively on what others might miss (depth)
+- This creates emergent comprehensive coverage without sequential dependencies
+
+---
+
+**End of Planning Template**

@@ -128,12 +128,12 @@ def run_stage1_and_prepare_faiss(
 # ─────────────────────────────────────────────────────────
 # 메인
 # ─────────────────────────────────────────────────────────
-async def main(experiment_config: Optional[dict] = None):
-    """메인 실행 함수
+async def main(experiment_config: Optional[dict] = None, question: Optional[str] = None):
+    """Main execution function.
 
     Args:
-        experiment_config: 실험용 설정 딕셔너리 (선택적)
-            예: {"use_planner": True, "use_activity_detection": False, ...}
+        experiment_config: Optional experiment configuration dictionary.
+        question: Optional user query for log analysis.
     """
     logger = get_logger(__name__)
     logger.debug("Service begins")
@@ -177,11 +177,12 @@ async def main(experiment_config: Optional[dict] = None):
     # 1) 벡터 인덱스 경로 준비 (BGE + FAISS)
     vectorstore, index_path = build_vectorstore()
 
-    # 2) 메인 프로세스 호출 (실험 설정 전달)
+    # 2) Main process with optional question
     await main_process(
         chatbot,
         vectorstore,
-        config=experiment_config  # 실험 설정 전달
+        config=experiment_config,
+        question=question
     )
 
 
@@ -217,6 +218,12 @@ if __name__ == "__main__":
         action="store_true",
         help="Run Stage1 only (if log-file is provided) and skip the main flow.",
     )
+    cli.add_argument(
+        "-q", "--query",
+        type=str,
+        default=None,
+        help="User query for log analysis (e.g., 'Find logs related to memory leak').",
+    )
     args = cli.parse_args()
 
     if args.log_file:
@@ -228,4 +235,4 @@ if __name__ == "__main__":
         )
 
     if not args.skip_main:
-        asyncio.run(main())
+        asyncio.run(main(question=args.query))

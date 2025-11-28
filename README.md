@@ -88,10 +88,10 @@ Optional arguments:
 
 | Argument | Description |
 |----------|-------------|
+| `-q`, `--query` | User query for log analysis (uses default if not specified) |
 | `--stage1-output-dir` | Parsing output directory (default: `<log_dir>/result`) |
 | `--stage1-anomaly-dir` | Anomaly detection output (default: `<output-dir>/anomaly_detection`) |
 | `--faiss-dir` | FAISS index directory (default: `<anomaly-dir>/faiss_index`) |
-| `--skip-main` | Run Stage 1 only, skip Stage 2 |
 
 ### Stage 2 Only (PRGG Pipeline)
 
@@ -100,6 +100,19 @@ If you already have a FAISS index from a previous run:
 ```bash
 export FAISS_INDEX_PATH=/path/to/faiss_index
 python main.py
+```
+
+### Custom Query Examples
+
+```bash
+# Debug a specific issue
+python main.py -q "Find logs related to memory leak in ActivityManager"
+
+# Locate boot events
+python main.py --query "When does the Android system boot process start the DropBoxManager service?"
+
+# Combine with log processing
+python main.py --log-file /path/to/logcat.log -q "Which log range shows the app crash?"
 ```
 
 ## Input Format

@@ -79,6 +79,87 @@ def analyze_query_results(
     return failed_queries, successful_queries, total_queries
 
 
+def analyze_query_results_with_skip(
+    cumulative_results: Dict[str, QueryEvaluationInfo],
+    failure_counts_by_query: Dict[str, int],
+    max_failures_per_subquery: int
+) -> Tuple[List[FailedQueryInfo], List[str], List[str], int]:
+    """평가 결과를 분석하여 실패/성공/스킵 쿼리 분류
+
+    N회 이상 실패한 서브쿼리는 "스킵" 처리하여 더 이상 재시도하지 않음.
+
+    Args:
+        cumulative_results: 누적 평가 결과
+        failure_counts_by_query: 서브쿼리별 실패 횟수
+        max_failures_per_subquery: 서브쿼리당 최대 실패 허용 횟수
+
+    Returns:
+        Tuple[List[FailedQueryInfo], List[str], List[str], int]:
+            (재시도할 실패 쿼리들, 성공 쿼리 ID들, 스킵된 쿼리 ID들, 전체 쿼리 수)
+    """
+    failed_queries = []
+    successful_queries = []
+    skipped_queries = []
+    total_queries = 0
+
+    for query_id, result_data in cumulative_results.items():
+        total_queries += 1
+        is_relevant = result_data.get("is_relevant", False)
+        relevance_score = result_data.get("relevance_score", 0.0)
+        confidence = result_data.get("confidence", 0.0)
+
+        if is_relevant:
+            successful_queries.append(query_id)
+        else:
+            # 실패 횟수 확인
+            failure_count = failure_counts_by_query.get(query_id, 0)
+
+            if failure_count >= max_failures_per_subquery:
+                # N회 이상 실패 → 스킵 (더 이상 재시도하지 않음)
+                skipped_queries.append(query_id)
+                logger.warning(
+                    f"[routing] Skipping {query_id}: failed {failure_count} times "
+                    f"(max={max_failures_per_subquery}), proceeding without this query"
+                )
+            else:
+                # 재시도 대상
+                failed_queries.append({
+                    "query_id": query_id,
+                    "query_text": result_data.get("query_text", ""),
+                    "relevance_score": relevance_score,
+                    "confidence": confidence,
+                    "reasoning": result_data.get("reasoning", ""),
+                    "failure_count": failure_count
+                })
+
+    return failed_queries, successful_queries, skipped_queries, total_queries
+
+
+def update_failure_counts(
+    metadata: Dict[str, Any],
+    failed_queries: List[FailedQueryInfo]
+) -> Dict[str, int]:
+    """서브쿼리별 실패 횟수 업데이트
+
+    Args:
+        metadata: AgentState 메타데이터
+        failed_queries: 현재 실패한 쿼리들
+
+    Returns:
+        Dict[str, int]: 업데이트된 서브쿼리별 실패 횟수
+    """
+    failure_counts = metadata.get("failure_counts_by_query", {})
+
+    for failed_query in failed_queries:
+        query_id = failed_query.get("query_id")
+        if query_id:
+            failure_counts[query_id] = failure_counts.get(query_id, 0) + 1
+            logger.info(f"[routing] {query_id} failure count: {failure_counts[query_id]}")
+
+    metadata["failure_counts_by_query"] = failure_counts
+    return failure_counts
+
+
 def identify_persistent_failures(
     current_failures: List[FailedQueryInfo],
     iteration_history: List[IterationHistoryEntry]
@@ -114,7 +195,7 @@ def identify_persistent_failures(
 
 
 def should_retry_routing(state: AgentState) -> str:
-    """평가 결과를 기반으로 재시도 여부 결정 (무한 루프 방지 시스템)
+    """평가 결과를 기반으로 재시도 여부 결정 (무한 루프 방지 시스템 + 서브쿼리별 스킵)
 
     이 함수는 quality_evaluator_node 실행 후 호출되어,
     관련성이 낮다고 평가된 서브쿼리들에 대해 재시도가 필요한지 판단합니다.
@@ -124,6 +205,7 @@ def should_retry_routing(state: AgentState) -> str:
     - 라우팅 패턴 탐지 (oscillation 감지)
     - 강제 종료 조건 및 우아한 성능 저하
     - 실시간 루프 감지 및 즉시 중단
+    - **서브쿼리별 실패 횟수 추적 및 N회 이상 실패 시 스킵**
 
     라우팅 결정:
     - "replanner": 실패한 서브쿼리 재구성 필요
@@ -136,7 +218,7 @@ def should_retry_routing(state: AgentState) -> str:
     Returns:
         str: 'replanner', 'retrieve', 또는 'answer'
     """
-    logger.info("[should_retry_routing] Starting routing decision with loop prevention")
+    logger.info("[should_retry_routing] Starting routing decision with loop prevention + per-subquery skip")
 
     try:
         # MetadataManager를 통한 안전한 메타데이터 접근
@@ -146,6 +228,7 @@ def should_retry_routing(state: AgentState) -> str:
         # 안전장치: quality_evaluator 실행 횟수 추적 및 제한
         # 설정에서 max_iterations 사용 (replanner와 동일한 값 공유)
         MAX_QUALITY_EVALUATIONS = _settings.replanner.max_iterations
+        MAX_FAILURES_PER_SUBQUERY = _settings.replanner.max_failures_per_subquery
 
         # quality_eval_count는 전역 카운터이므로 직접 접근
         metadata = state.get("metadata", {})
@@ -193,7 +276,7 @@ def should_retry_routing(state: AgentState) -> str:
             return "answer"
 
         # ============================================
-        # 3. 평가 결과 분석
+        # 3. 평가 결과 분석 (서브쿼리별 스킵 로직 적용)
         # ============================================
         cumulative_results = evaluator_data.get("cumulative_evaluation_results", {})
         current_results = evaluator_data.get("evaluation_results", {})
@@ -205,13 +288,60 @@ def should_retry_routing(state: AgentState) -> str:
             logger.warning("[should_retry_routing] No evaluation results found, proceeding to answer")
             return "answer"
 
-        # 실패/성공 쿼리 분석
-        failed_queries, successful_queries, total_queries = analyze_query_results(cumulative_results)
+        # 서브쿼리별 실패 횟수 가져오기
+        failure_counts_by_query = metadata.get("failure_counts_by_query", {})
 
-        logger.info(f"[should_retry_routing] Query analysis: {len(failed_queries)}/{total_queries} failed")
+        # 실패/성공/스킵 쿼리 분석 (새로운 함수 사용)
+        failed_queries, successful_queries, skipped_queries, total_queries = analyze_query_results_with_skip(
+            cumulative_results,
+            failure_counts_by_query,
+            MAX_FAILURES_PER_SUBQUERY
+        )
+
+        # 실패 횟수 업데이트 (현재 실패한 쿼리들에 대해)
+        update_failure_counts(metadata, failed_queries)
+
+        # 스킵된 쿼리 메타데이터 저장
+        if skipped_queries:
+            metadata["skipped_queries"] = list(set(metadata.get("skipped_queries", []) + skipped_queries))
+            logger.warning(f"[should_retry_routing] Total skipped queries: {metadata['skipped_queries']}")
+
+        logger.info(
+            f"[should_retry_routing] Query analysis: "
+            f"{len(failed_queries)} failed (retryable), "
+            f"{len(successful_queries)} successful, "
+            f"{len(skipped_queries)} skipped (gave up), "
+            f"total={total_queries}"
+        )
 
         # ============================================
-        # 4. 라우팅 결정 로직 (루프 방지 적용)
+        # 4. 스킵 로직: 재시도할 실패 쿼리가 없으면 answer로
+        # ============================================
+        if not failed_queries:
+            # 재시도할 실패 쿼리가 없음 (모두 성공 또는 스킵)
+            if skipped_queries:
+                logger.warning(
+                    f"[should_retry_routing] All remaining failed queries skipped. "
+                    f"Proceeding with {len(successful_queries)} successful queries only."
+                )
+                routing_decision = {
+                    "route": "answer",
+                    "reason": f"All retryable queries exhausted: {len(successful_queries)} successful, {len(skipped_queries)} skipped",
+                    "strategy": "partial_success_with_skipped"
+                }
+            else:
+                routing_decision = {
+                    "route": "answer",
+                    "reason": f"All {total_queries} queries passed evaluation",
+                    "strategy": "success_completion"
+                }
+
+            update_loop_prevention_metadata(state, routing_decision["route"], routing_decision, loop_prevention)
+            logger.info(f"[should_retry_routing] Final decision: {routing_decision['route']} - {routing_decision['reason']}")
+            return routing_decision["route"]
+
+        # ============================================
+        # 5. 라우팅 결정 로직 (루프 방지 적용)
         # ============================================
         iteration_count = replanner_data.get("iteration_count", 0)
         max_iterations = min(10, 25 - current_iteration)  # 글로벌 한계 내에서 조정
@@ -231,7 +361,7 @@ def should_retry_routing(state: AgentState) -> str:
         route = routing_decision["route"]
 
         # ============================================
-        # 5. 루프 방지 메타데이터 업데이트
+        # 6. 루프 방지 메타데이터 업데이트
         # ============================================
         update_loop_prevention_metadata(state, route, routing_decision, loop_prevention)
 
@@ -553,6 +683,8 @@ def determine_iterative_routing(
 
 # 기존 코드와의 호환성을 위해 private 함수명으로 alias 제공
 _analyze_query_results = analyze_query_results
+_analyze_query_results_with_skip = analyze_query_results_with_skip
+_update_failure_counts = update_failure_counts
 _identify_persistent_failures = identify_persistent_failures
 _determine_iterative_routing_with_loop_prevention = determine_iterative_routing_with_loop_prevention
 _determine_iterative_routing = determine_iterative_routing

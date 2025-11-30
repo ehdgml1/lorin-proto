@@ -1,0 +1,9 @@
+Case 05: PackageManager DB Corruption
+
+Warning Ranges (Phase 1: 전조증상)
+
+line[4000~4055]: PackageManager 설치 작업, SQLite 동시 쓰기 발생, 데이터베이스 락 경합
+
+Critical Ranges (Phase 2: 크래시 발생)
+
+line[4236~4281]: SQLite "Database disk image is malformed" 오류, PackageManager 데이터베이스 손상 감지, SIGABRT로 system_server 크래시

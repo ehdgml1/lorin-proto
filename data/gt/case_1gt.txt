@@ -1,0 +1,17 @@
+# Ground-truth Labels: 사용자 전환 또는 재시작 후 저장소에 접근이 불가능한 상황
+
+## Critical Ranges
+# These ranges contain the most critical evidence directly related to storage access failures after boot/user switch
+line[5998~6318]  # User 0 unlocking, storage preparation, fscrypt operations, volume mounting failures
+line[11525~12100]  # User 10 (secondary user) unlocking, storage preparation, similar volume mounting issues
+
+## Warning Ranges
+# These ranges show early indicators and related context that leads to the critical issues
+line[1075~1111]  # Initial boot storage mount with f2fs->ext4 fallback, filesystem not cleanly shutdown
+line[6815~6878]  # Storage manager reporting emulated volume unmounted due to system locked
+
+## Context Ranges
+# These ranges provide additional context about system state and recovery attempts
+line[16469~16484]  # User 10 cleanup operations, unmounting volumes during user switch
+line[19392~19402]  # User 10 re-unlock attempt, storage volume remounting
+

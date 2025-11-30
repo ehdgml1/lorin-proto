@@ -1,0 +1,17 @@
+Case 11: ActivityManager Activity Leak
+
+Warning Ranges (Phase 1: 전조증상)
+
+line[6822~6850]: Activity 라이프사이클 중 Activity 미파괴 시작, 초기 Activity leak 감지, 메모리 압박 징후 발생
+
+Escalation Ranges (Phase 2: 누수 확대)
+
+line[6854~6895]: Activity leak 누적, 메모리 압박 증가 지속, GC 빈도 증가, 힙 사용량 임계값 접근
+
+Build-up Ranges (Phase 3: GC 스톰)
+
+line[9102~9138]: ActivityManager 메모리 누수 위험 수준, GC 활동 급증 (GC Storm), 시스템 전반 속도 저하 심화
+
+Critical Ranges (Phase 4: OOM 위험)
+
+line[9144~9179]: GC OOM 임박 상태, 시스템 심각한 속도 저하, 강제 GC 다수 발생, 메모리 확보 실패 임박

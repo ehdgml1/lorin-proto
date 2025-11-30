@@ -1,0 +1,17 @@
+Case 06: Binder Transaction Buffer Exhaustion
+
+Warning Ranges (Phase 1: 전조증상)
+
+line[1963~1990]: 높은 Binder 트랜잭션 부하 시작, 트랜잭션 버퍼 오버플로우 초기 발생, 대형 트랜잭션 감지, Dead binder notification 발생
+
+Escalation Ranges (Phase 2: 스레드 풀 고갈)
+
+line[1993~2012]: Binder 스레드 풀 고갈 (16 threads starved), 메모리 할당 실패 시작, Death notification 오버플로우, 트랜잭션 드롭 발생
+
+Build-up Ranges (Phase 3: 버퍼 손상)
+
+line[2015~2028]: Binder mmap 실패, 커널 드라이버 에러 반환 (-12), 버퍼 포인터 무효화, 프로세스 상태 불안정화
+
+Critical Ranges (Phase 4: 크래시 발생)
+
+line[3179~3247]: Binder 잘못된 주소 접근, libc free()에 잘못된 주소 전달, SIGSEGV 발생, Binder 상태 손상 확정, 프로세스 크래시 및 복구

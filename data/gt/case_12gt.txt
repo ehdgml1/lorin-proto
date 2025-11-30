@@ -1,0 +1,9 @@
+Case 03: AudioFlinger FastMixer Deadlock
+
+Warning Ranges (Phase 1: 전조증상)
+
+line[252~307]: 미디어 재생 중 FrameTracker SF 프레임 누락, AudioFlinger 버퍼 underrun 발생, FastMixer 스케줄링 지연 감지
+
+Critical Ranges (Phase 2: 크래시 발생)
+
+line[488~533]: 심각한 프레임 드롭, AudioFlinger 우선순위 역전(Priority inversion), FastMixer 데드락 감지, SIGABRT로 audioserver 크래시

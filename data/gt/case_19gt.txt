@@ -1,0 +1,9 @@
+Case 10: ImsService Binder Death
+
+Warning Ranges (Phase 1: 전조증상)
+
+line[362~413]: IMS 통화 설정 시작, Telephony IMS 등록, IMS로 Binder 트랜잭션
+
+Critical Ranges (Phase 2: 크래시 발생)
+
+line[583~626]: Binder death notification, ImsService 사망, 통화 설정 실패, 서비스 재시작

@@ -1,0 +1,10 @@
+# Ground Truth: 화면 렌더링 서비스가 재시작됨
+
+## Critical Ranges
+line[3~10]: ComposerService (surfaceflinger) 원격(ADB/AIDL) 연결 "died" 연속 보고로 렌더링 서비스 다운 징후 확인
+
+## Warning Ranges
+line[191~195]: SurfaceFlinger "Using HWComposer service: default" 및 "SurfaceFlinger is starting"으로 재시작 진입 확인
+
+## Context Ranges
+line[222~224]: "main thread ready… Initializing graphics H/W…", RenderEngine 초기화 로그로 재가동 진행 확인

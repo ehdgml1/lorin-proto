@@ -1,0 +1,5 @@
+# Ground Truth: ARM64 에뮬레이터 부트루프
+
+## Critical Ranges
+line[2722~2747]: Zygote가 "System server process 1994 has been created" 직후 zygote64에서 SIGSEGV 발생 및 ZygoteInit.{waitForSecondaryZygote,startSystemServer,main} 백트레이스 확인
+line[4550~4580]: "System server process 2943 has been created" 이후 system_server에서 SIGSEGV 발생, debuggerd 처리 및 libart 백트레이스 출력

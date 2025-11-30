@@ -1,0 +1,17 @@
+# Ground Truth: 오디오 처리 서버가 재시작됨
+
+## Warning Ranges
+line[1999~2006]: SoundTrigger HAL 등록 실패(hwservicemanager, LegacySupport) 로그로 오디오 재시작 직후 하위 HAL 가용성 확인
+line[2421~2428]: SoundTrigger HAL 두 번째 등록 시도 실패로 오디오 재초기화 과정에서 반복적인 HAL 접근 확인
+
+## Context Ranges
+line[1977~1977]: perfetto가 Audioserver_Restart.cfg 파일을 찾으려 시도하여 예정된 재시작 추적 확인
+line[1991~1998]: Bluetooth 오디오 HAL 재시작 및 audio HAL 재등록(HidlServiceManagement, LegacySupport) 로그로 재시작 직후 복구 절차 확인
+line[2128~2128]: AudioAnalytics의 onAudioServerStart (mStartCount:2, mStopCount:1)로 첫 번째 오디오 서버 재시작 시점 포착
+line[2607~2642]: APM_AudioPolicyManager의 반복적인 "invalid volume index range" 오류 및 AudioFlinger 스레드 "ready to run" 로그로 오디오 엔진 재초기화 상태 확인
+line[3697~3697]: AudioAnalytics의 onAudioServerStart (mStartCount:3, mStopCount:2)로 두 번째 오디오 서버 재시작 시점 포착
+line[4241~4264]: StartSoundTriggerMiddlewareService 시작 및 SoundTriggerMiddlewareImpl 모듈 추가 실패/예외(NoSuchElementException) 로그로 재시작 직후 서브시스템 초기화 상태 점검
+
+## Critical Ranges
+line[1978~1990]: AudioFlinger/AudioPolicyService server died, Audioserver died, CaptureStateTracker 종료 로그로 오디오 서버 종료 이벤트 포착
+line[4229~4240]: SystemServerTiming StartAudioService 시작·완료(21ms) 및 AudioService$Lifecycle Starting 로그로 프레임워크 오디오 서비스 재가동 확인

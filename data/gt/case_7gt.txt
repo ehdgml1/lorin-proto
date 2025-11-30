@@ -1,0 +1,13 @@
+# Ground-truth Labels: 최신 WorkManager API가 장치가 깨어난 후 작업을 재개하지 않음
+
+## Critical Ranges
+line[2144~2182]
+line[7680~7693]
+line[2115~2143]
+
+## Warning Ranges
+line[383~384]
+line[5446~5450]
+
+## Context Ranges
+line[34~281]

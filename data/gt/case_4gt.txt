@@ -1,0 +1,10 @@
+# Ground Truth: 안드로이드 핵심 시스템 서버가 크래시 발생
+
+## Critical Ranges
+line[112~128]: system_server에 대한 Fatal signal 발생 헤더(프로세스/스레드, ABI, 빌드 지문) 확인
+line[129~156]: 레지스터 덤프 및 "backtrace:" 프레임 시작 구간으로 크래시 원인 스택 추출
+line[310~318]: "Watchdog: killing system_server" 또는 ANR/Watchdog 트리거 로그로 크래시 유발 조건 확인
+
+## Context Ranges
+line[402~415]: tombstone/debuggerd 수집 완료 및 "resuming target" 등 크래시 수습 흐름
+line[520~536]: SystemServer 재시작 진입("SystemServer is starting/updating…", 서비스 초기화 배너) 확인

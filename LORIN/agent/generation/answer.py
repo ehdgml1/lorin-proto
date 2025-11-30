@@ -614,6 +614,11 @@ def answer_node(
             logger.error(f"[answer_node] Error in loop prevention check: {e}")
             raise
 
+        # 스킵된 쿼리 정보 로깅
+        skipped_queries = md.get("skipped_queries", [])
+        if skipped_queries:
+            logger.warning(f"[answer_node] Skipped queries (gave up after max failures): {skipped_queries}")
+
         # 성공한 쿼리가 있으면 정상 답변 생성, 없으면 종료 메시지 생성
         termination_message = None
         has_successful_queries = len(results_by_qid) > 0

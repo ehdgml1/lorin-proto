@@ -1,23 +1,4 @@
-"""
-LORIN - Log Observation and Reasoning Intelligence Network
----
 
-LORIN is a LangGraph-based multi-agent log analysis system.
-Supports various LLM models (Gemini, Claude, GPT, EXAONE) with
-agent-based log analysis workflows and session management.
-
-Module Structure
----
-- **agent**: LangGraph-based agent system
-- **llm**: Unified LLM interface and session management
-- **logger**: Advanced logging and monitoring
-- **process**: Data processing and workflow management
-- **prompt**: Prompt template and management
-
-Author: CAU HILab & BALab
-Version: 0.1.0
-License: None
-"""
 
 __version__ = "0.1.0"
 __author__ = "LORIN Team"

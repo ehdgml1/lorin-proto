@@ -90,8 +90,11 @@ class BGEGemma2MultiGPUEmbeddings(Embeddings):
         )
         
         # Multi-GPU 설정
-        if self.use_multi_gpu:
+        # ⚠️ DataParallel은 GPU 0에 메모리 누수 문제가 있음 (PyTorch Issue #7138)
+        # 단일 GPU 지정 시 DataParallel 사용하지 않음
+        if self.use_multi_gpu and len(self.gpu_ids) > 1:
             print(f"Setting up DataParallel on GPUs: {self.gpu_ids}")
+            print("⚠️  Warning: DataParallel may leak memory to GPU 0")
             # 첫 번째 GPU를 primary로 설정
             torch.cuda.set_device(self.gpu_ids[0])
             self.model = nn.DataParallel(self.model, device_ids=self.gpu_ids)
@@ -618,7 +621,8 @@ def build_and_save_faiss(
     df: pd.DataFrame,
     index_path: str = INDEX_PATH,
     use_advanced_multi_gpu: bool = False,
-    batch_size_per_gpu: int = 32
+    batch_size_per_gpu: int = 32,
+    gpu_ids: Optional[List[int]] = None
 ):
     """
     DataFrame로부터 FAISS 인덱스 생성 및 저장
@@ -628,6 +632,7 @@ def build_and_save_faiss(
         index_path: 인덱스 저장 경로
         use_advanced_multi_gpu: 고급 멀티 GPU 병렬 처리 사용 여부
         batch_size_per_gpu: GPU당 배치 크기
+        gpu_ids: 사용할 GPU ID 리스트 (None이면 모든 GPU 사용, 예: [1]이면 GPU 1만 사용)
     """
 
     # 설정값 출력
@@ -661,9 +666,11 @@ def build_and_save_faiss(
         )
     else:
         print("\n사용: Standard Multi-GPU (DataParallel)")
+        print(f"  GPU IDs: {gpu_ids if gpu_ids else 'all available'}")
         embeddings = BGEGemma2MultiGPUEmbeddings(
             model_name=MODEL_NAME,
             batch_size_per_gpu=batch_size_per_gpu,
+            gpu_ids=gpu_ids,
             use_fp16=True
         )
     
@@ -714,9 +721,48 @@ def build_and_save_faiss(
     except Exception as e:
         print(f"⚠️ 메타데이터 검증 중 오류: {e}")
 
-    # GPU 메모리 정리
+    # GPU 메모리 정리 - 모델을 CPU로 이동 후 삭제 (검증된 방법)
+    print("\n=== GPU 메모리 정리 ===")
+    import gc
+
+    # STEP 1: 모델을 CPU로 이동 (GPU 텐서 참조 완전 제거)
+    if hasattr(embeddings, 'model') and embeddings.model is not None:
+        try:
+            # DataParallel인 경우 내부 module도 CPU로 이동
+            if isinstance(embeddings.model, nn.DataParallel):
+                print("  Moving DataParallel.module to CPU...")
+                embeddings.model.module.cpu()
+            print("  Moving model to CPU...")
+            embeddings.model.cpu()
+        except Exception as e:
+            print(f"  Warning: Failed to move model to CPU: {e}")
+        del embeddings.model
+
+    # STEP 2: 토크나이저 삭제
+    if hasattr(embeddings, 'tokenizer') and embeddings.tokenizer is not None:
+        del embeddings.tokenizer
+
+    # STEP 3: embeddings 객체 삭제
+    del embeddings
+
+    # STEP 4: Python GC 강제 실행 (여러 번 - 순환 참조 해제)
+    for _ in range(5):
+        gc.collect()
+
+    # STEP 5: CUDA 캐시 비우기
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+
+        # 추가 GC 후 다시 캐시 비우기
+        gc.collect()
+        torch.cuda.empty_cache()
+
+        # 메모리 상태 출력
+        for i in range(torch.cuda.device_count()):
+            allocated = torch.cuda.memory_allocated(i) / 1024**3
+            reserved = torch.cuda.memory_reserved(i) / 1024**3
+            print(f"  GPU {i}: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved")
 
     return vectorstore
 

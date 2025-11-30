@@ -1,0 +1,13 @@
+Case 07: PermissionController LiveData Leak
+
+Warning Ranges (Phase 1: 전조증상)
+
+line[1150~1175]: PermissionController LiveData observer 등록 시작, 권한 검사 빈도 증가 감지, GC 활동 초기 증가
+
+Build-up Ranges (Phase 2: 메모리 압박 증가)
+
+line[1179~1212]: Observer 누적으로 GC 빈도 급증, 메모리 사용량 증가, 시스템 성능 저하 감지, Leaked observer 경고 발생
+
+Critical Ranges (Phase 3: ANR 위험)
+
+line[2363~2412]: GC 명시적 GC 과도하게 빈번 발생, PermissionController leaked observer 다수, 시스템 심각한 속도 저하, ANR 위험 상태 도달

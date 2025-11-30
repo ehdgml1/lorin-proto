@@ -1,0 +1,12 @@
+# Ground Truth: 앱 프로세스 생성 담당(Zygote)이 강제 종료됨
+
+## Critical Ranges
+line[27~35]: Zygote/zygote64 프로세스 "died/killed" 보고 및 tombstone(또는 debuggerd) 연계 표시로 강제 종료 시점 확인
+line[142~158]: Fatal signal 및 "backtrace:" 시작 등 Zygote 크래시 덤프 헤더·레지스터 구간
+
+## Warning Ranges
+line[301~309]: SystemServer/ActivityManager가 Zygote 재기동(소켓 재연결, "Connecting to zygote") 절차 진입 로그
+
+## Context Ranges
+line[455~463]: ZygoteInit 재시작 후 "Preloading classes/resources" 등 프리로드 단계로 정상 부팅 재진행 여부 확인
+line[612~620]: ActivityManager의 앱 프로세스 포크/할당 재개("Start proc … for … via zygote/usap")로 재가동 이후 영향 범위 검증

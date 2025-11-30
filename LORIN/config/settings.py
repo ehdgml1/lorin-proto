@@ -101,6 +101,9 @@ class ReplannerSettings:
     # Optimized retry settings
     max_retries: int = field(default_factory=lambda: int(os.getenv("REPLANNER_MAX_RETRIES", "2")))
 
+    # Per-subquery failure limit: skip subquery after N consecutive failures
+    max_failures_per_subquery: int = field(default_factory=lambda: int(os.getenv("REPLANNER_MAX_FAILURES_PER_SUBQUERY", "5")))
+
 
 @dataclass
 class LoggerSettings:

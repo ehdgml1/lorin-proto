@@ -1,0 +1,9 @@
+Case 08: Skia GPU Context Loss
+
+Warning Ranges (Phase 1: 전조증상)
+
+line[994~1045]: GPU 렌더링 부하 증가, Skia GPU 백엔드 초기화, RenderThread 복잡한 셰이더 컴파일, GPU 메모리 할당
+
+Critical Ranges (Phase 2: 크래시 발생)
+
+line[1225~1271]: Skia GPU 컨텍스트 손실, GPU fault 발생, system_server SIGSEGV, SurfaceFlinger 크래시

@@ -1,0 +1,17 @@
+Case 01: Bluetooth A2DP Deadlock
+
+Warning Ranges (Phase 1: 전조증상)
+
+line[2640~2660]: Settings 앱 활성화, Bluetooth 코덱 재설정 시작, AudioFlinger 미세한 glitch 감지, bt_stack A2DP 레이턴시 초기 증가 (8ms → 25ms)
+
+Escalation Ranges (Phase 2: 락 경합 시작)
+
+line[2666~2693]: 락 경합(Lock contention) 본격화, AudioFlinger 버퍼 레벨 감소 (55%), bt_btif 스레드 간 상호 락 대기 감지, 우선순위 역전 위험 신호
+
+Build-up Ranges (Phase 3: 데드락 형성)
+
+line[6715~6785]: A2DP 코덱 초기화 중 AudioFlinger underrun 급증, 코덱 협상 지연 심화, Binder 교착상태 징후, 스레드 스타베이션 발생
+
+Critical Ranges (Phase 4: 크래시 발생)
+
+line[6789~6902]: Binder deadlock 발생 확정, bt_btif DEADLOCK 감지, AudioFlinger mutex 획득 실패, SIGABRT/SIGSEGV 신호로 프로세스 사망, 서비스 재시작

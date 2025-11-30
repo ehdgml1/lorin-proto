@@ -1,0 +1,22 @@
+{
+  "case_1": "I am unable to access external storage files after switching from the main user to a guest user. Please tell me which log range I should check to debug this storage permission issue.",
+  "case_2": "The arm64 emulator never finishes booting and keeps showing the boot animation indefinitely. Please tell me which log range I should check for debugging this boot loop.",
+  "case_3": "When I start the emulator, it shows the Google logo but then immediately reboots, repeating this cycle. Please tell me which log range I should check to debug this boot failure.",
+  "case_4": "The device performed a soft reboot unexpectedly, and the UI restarted while I was using the device. Please tell me which log range I should check for debugging this system_server crash.",
+  "case_5": "Apps are failing to launch and crashing immediately. It seems like the main process for forking apps has terminated. Please tell me which log range I should check to debug this Zygote crash.",
+  "case_6": "Audio playback cuts out intermittently, and I suspect the audio service is restarting in the background. Please let me know which log ranges I should check to troubleshoot this audio issue.",
+  "case_7": "Background tasks scheduled with WorkManager are not executing after the device wakes up from doze mode. Please tell me which log range I should check to debug this task execution failure.",
+  "case_8": "The application crashes immediately when attempting to transfer a large amount of data to another activity. Please tell me which log range I should check for debugging this IPC crash.",
+  "case_9": "The screen flickers black momentarily and the UI redraws, suggesting the display rendering service might have crashed. Please tell me which log range I should check to debug this SurfaceFlinger issue.",
+  "case_10": "Bluetooth audio stopped working entirely while changing codec settings, and the settings UI has become unresponsive. Please tell me which log range I should check for debugging this Bluetooth freeze.",
+  "case_11": "The Settings application is completely frozen and not responding to any touch inputs, eventually showing an ANR dialog. Please tell me which log range I should check for debugging this Application Not Responding issue.",
+  "case_12": "Audio playback is stuttering severely with noticeable frame drops, and eventually the audio service crashes. Please tell me which log range I should check for debugging this audio performance and crash issue.",
+  "case_13": "The system server crashes repeatedly with signs of memory exhaustion after using media applications for a while. Please tell me which log range I should check for debugging this potential native memory leak.",
+  "case_14": "The system crashes or reboots whenever I try to install or update multiple apps simultaneously. Please tell me which log range I should check for debugging this package installation failure.",
+  "case_15": "Multiple apps and system processes are crashing randomly during heavy usage involving inter-process communication. Please tell me which log range I should check for debugging this IPC instability.",
+  "case_16": "The system becomes sluggish and slow to respond after using permission-related features for a long time. Please tell me which log range I should check for debugging this performance degradation.",
+  "case_17": "The UI rendering crashes, causing a soft reboot. It seems to happen consistently during complex graphical operations. Please tell me which log range I should check for debugging this graphics crash.",
+  "case_18": "Network connectivity is completely lost. I cannot access any websites, and it seems DNS resolution is failing continuously. Please tell me which log range I should check for debugging this network connectivity issue.",
+  "case_19": "VoLTE calls fail to connect, and the IMS service seems to crash and restart during the call attempt. Please tell me which log range I should check for debugging this call setup failure.",
+  "case_20": "The system performance is degrading over time, eventually crashing with an OOM error after switching activities frequently. Please tell me which log range I should check for debugging this memory issue."
+}

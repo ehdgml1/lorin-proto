@@ -1,0 +1,17 @@
+Case 04: MediaSession Callback Leak
+
+Warning Ranges (Phase 1: 전조증상)
+
+line[1704~1730]: MediaSessionService 콜백 등록 급증, 클라이언트 프로세스 사망 발생, 콜백 미제거 시작, Native heap 초기 증가 (134MB → 187MB)
+
+Escalation Ranges (Phase 2: 누수 확대)
+
+line[1735~1754]: 복수 클라이언트 사망에도 콜백 잔존, Native heap 급증 (234MB → 367MB), GC 효과 감소, 콜백 리스트 지속 증가 (23 → 34 entries)
+
+Build-up Ranges (Phase 3: OOM 임박)
+
+line[1759~1771]: Native heap 위험 수준 도달 (467MB → 498MB, 97%), libbinder Native 할당 실패 시작, 시스템 리소스 고갈 상태
+
+Critical Ranges (Phase 4: 크래시 발생)
+
+line[3272~3317]: Native OOM 발생, libbinder malloc 실패, SIGSEGV 발생, system_server 크래시, 미디어 세션 전체 종료, 소프트 리부트 필요

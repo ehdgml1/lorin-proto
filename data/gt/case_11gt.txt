@@ -1,0 +1,13 @@
+Case 02: InputDispatcher ANR
+
+Warning Ranges (Phase 1: 전조증상)
+
+line[1190~1209]: Settings 앱 처리 중 InputDispatcher 키 이벤트 대기 상태 시작, 디스크 I/O 작업 발생, InputQueue 깊이 초기 증가, UI thread 블로킹 징후
+
+Build-up Ranges (Phase 2: 상황 악화)
+
+line[1213~1248]: InputQueue 급격한 증가 (85% → 99% 용량), 메인 스레드 블로킹 시간 증가 (1.2초 → 5초), ANR 임계값 접근, 이벤트 드롭 시작
+
+Critical Ranges (Phase 3: ANR 발생)
+
+line[2408~2460]: InputDispatcher "Application is not responding" 보고, com.android.settings ANR 발생, 입력 이벤트 타임아웃, ANR 다이얼로그 표시, 스택 트레이스 덤프

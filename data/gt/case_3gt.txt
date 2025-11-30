@@ -1,0 +1,9 @@
+# Ground-truth Labels: Emulator 실행 시 부팅이 반복되는 문제
+
+## Critical Ranges
+line[24~97]
+line[99~167]
+line[986~1125]
+
+## Warning Ranges
+line[530~677]

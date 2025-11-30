@@ -1,0 +1,10 @@
+# Ground Truth: 프로세스 간 전달한 데이터가 너무 커서 실패 발생
+
+## Critical Ranges
+line[1821~1925]: StorageManagerService에서 ParcelableException/Bundle.getParcelable/RemoteCallback/Binder.execTransact 스택이 연속적으로 찍힙니다. 프로세스 간 Parcel/Bundle 전달 경로에서 페이로드 크기 문제를 의심할 핵심 구간입니다
+
+## Warning Ranges
+line[1447~1524]: Binder에서 RuntimeException 및 권한 관련 예외가 발생한 직후 execTransact 호출까지 이어집니다. 동일 세션 내 IPC 실패 징후로, 상위 원인 추적 시 참고하세요
+
+## Context Ranges
+line[2699~2761]: StrictMode 스택에 onTransact/Binder.execTransact가 직접 등장합니다. 트랜잭션 처리 경로로, 과대 페이로드로 인한 지연/차단 여부 점검에 유효합니다

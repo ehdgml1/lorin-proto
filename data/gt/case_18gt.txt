@@ -1,0 +1,13 @@
+Case 09: NetworkStack DNS Timeout Cascade
+
+Warning Ranges (Phase 1: 전조증상)
+
+line[1293~1320]: DNS 쿼리 타임아웃 초기 발생, NetworkStack DNS 해석 지연 시작, 개별 타임아웃 감지
+
+Build-up Ranges (Phase 2: 연쇄 실패 전파)
+
+line[1325~1353]: 타임아웃 연쇄적 누적, 다중 DNS 쿼리 실패, 네트워크 연결 불안정 확대, 캐스케이드 패턴 형성
+
+Critical Ranges (Phase 3: 네트워크 장애)
+
+line[2504~2551]: DnsResolver 타임아웃 연쇄 폭발, NetworkStack 다중 실패 보고, 연결 손실 상태, 네트워크 전체 도달 불가

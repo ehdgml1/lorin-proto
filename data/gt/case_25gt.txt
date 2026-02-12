@@ -1,0 +1,25 @@
+Case 25: Camera Stream Configuration Error (8K Resolution Exceeds Hardware Capability)
+
+Warning Ranges (Phase 1-1: 카메라 초기화)
+
+line[5865~5906]: Camera3Device 초기화, 1080p 프리뷰 스트림 설정, 30fps 안정적 캡처 동작
+
+Escalation Ranges (Phase 1-2: 4K 비디오 모드)
+
+line[7238~7261]: 4K 비디오 모드 전환, 3개 스트림 설정 (preview+video+JPEG), 대역폭 체크 PASS (746.5MB/s < 800MB/s)
+
+Build-up Ranges (Phase 1-3: 4K 녹화)
+
+line[8577~8600]: 4K 비디오 녹화 안정적 동작, 30fps 유지, MediaRecorder 프레임 쓰기 정상
+
+Pressure Ranges (Phase 2: 8K 시도)
+
+line[9916~9962]: 8K 설정 시도, ISP 제한 감지 (max 4096x2160), 대역폭 초과 (1058.6 > 800MB/s), 센서 native 해상도 초과
+
+Critical Ranges (Phase 3: 설정 실패)
+
+line[11290~11322]: CAMERA3_STREAM_CONFIGURATION_ERROR, configureStreams 실패 (-22), 카메라 앱 크래시
+
+Recovery Ranges (Phase 4: 복구)
+
+line[12649~12673]: 카메라 재초기화, 4K 설정으로 복구 (preview+4K video), 정상 동작 재개

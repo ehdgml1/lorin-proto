@@ -1,0 +1,17 @@
+Case 24: Audio Device Configuration Error (Unsupported Sample Rate)
+
+Warning Ranges (Phase 1-1: 초기화)
+
+line[3542~3574]: AudioFlinger/AudioPolicyManager 초기화, 스피커 출력 설정 (48kHz, stereo, PCM_16_BIT), 정상 오디오 재생
+
+Escalation Ranges (Phase 1-2: 설정 변경 시도)
+
+line[4766~4780]: 헤드셋 연결 시도, 96kHz 샘플레이트 설정 요청, 지원하지 않는 레이트 경고 (rate_max=48000)
+
+Critical Ranges (Phase 2: 설정 실패)
+
+line[5956~5971]: EINVAL 에러 발생, rate mismatch (48000 vs 96000), openOutput 실패, AudioTrack obtainBuffer 에러
+
+Recovery Ranges (Phase 3: Fallback)
+
+line[7115~7248]: 스피커 디바이스로 자동 fallback, 48kHz로 재설정, 정상 오디오 재생 재개

@@ -1,0 +1,17 @@
+Case 27: Sensor Service Deadlock
+
+Warning Ranges (Phase 1-1: 센서 초기화)
+
+line[2612~2654]: SensorService 초기화, sensors_hal 로드, 12개 센서 등록, 정상 센서 이벤트 수신
+
+Escalation Ranges (Phase 1-2: Lock 경합)
+
+line[3561~3580]: Lock 경합 발생, mLock vs mDirectChannelLock 충돌, 센서 이벤트 처리 지연 시작
+
+Critical Ranges (Phase 2: 데드락)
+
+line[4464~4485]: ETIMEDOUT 에러, 데드락 감지, SensorService 응답 없음, 센서 데이터 전달 중단
+
+Recovery Ranges (Phase 3: 복구)
+
+line[5373~5483]: 데드락 recovery 트리거, 강제 unlock 수행, 센서 서비스 재시작, 정상 동작 재개

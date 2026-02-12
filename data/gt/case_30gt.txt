@@ -1,0 +1,25 @@
+Case 30: SurfaceControl Handle Pool Exhaustion (Surface Handle Leak)
+
+Warning Ranges (Phase 1-1: 초기화)
+
+line[4065~4130]: WindowManager/SurfaceControl 초기화, Surface handle pool 생성 (max 4096), 정상 surface 할당
+
+Escalation Ranges (Phase 1-2: 누수 시작)
+
+line[5077~5134]: First Leaks 발생, Activity 종료/회전 시 handle 미해제, surface leak 시작 (2→4 orphaned)
+
+Build-up Ranges (Phase 1-3: 누수 가속)
+
+line[6074~6114]: Stress Test로 누수 가속, rapid rotation에서 handle 누적, orphaned handles 증가 (5→7개)
+
+Pressure Ranges (Phase 2: 대규모 누수)
+
+line[7037~7076]: Batch Leaks 발생, 대량 surface 생성/종료에서 대규모 누수, orphaned handles 급증 (39→339개)
+
+Critical Ranges (Phase 3: 풀 고갈)
+
+line[7999~8074]: Handle pool 고갈 (99.3% 용량), createSurface FAILED: handle pool exhausted, 무고한 앱 크래시
+
+Recovery Ranges (Phase 4: 복구)
+
+line[9014~9023]: Emergency cleanup 수행, 3539 orphaned handles 회수, 정상 동작 복구 (12.9% 사용률)

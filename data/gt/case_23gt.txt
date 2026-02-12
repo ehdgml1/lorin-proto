@@ -1,0 +1,21 @@
+Case 23: MediaCodec BufferPool Exhaustion
+
+Warning Ranges (Phase 1-1: 초기화)
+
+line[2984~3016]: MediaCodec/Codec2 서비스 초기화, BufferPool 생성 (32MB), AVC/HEVC/VP9 디코더 등록
+
+Escalation Ranges (Phase 1-2: 다중 클라이언트)
+
+line[3821~3853]: 비디오 재생 시작, 다중 MediaCodec 클라이언트 생성, BufferPool 메모리 증가 (64MB→96MB)
+
+Build-up Ranges (Phase 2: 메모리 압박)
+
+line[4658~4714]: BufferPool 메모리 압박 심화, 할당 지연 증가 (112ms→456ms), 사용률 64%→96%, 임계값 접근
+
+Critical Ranges (Phase 3: ENOMEM)
+
+line[5543~5586]: BufferPool 완전 고갈, allocate FAILED, ENOMEM 에러 (-12), 다중 비디오 앱 크래시
+
+Recovery Ranges (Phase 4: 복구)
+
+line[6405~6434]: BufferPool flush 수행, GC로 메모리 해제 (192MB→80MB), 정상 사용률 복구 (24%)

@@ -1,0 +1,18 @@
+# Log Analysis - Subquery Response (BASELINE - Minimal Guidance)
+
+## Query
+{{ query }}
+
+## Retrieved Evidence
+{{ evidence_block if evidence_block else "(No evidence available)" }}
+
+## Instructions
+
+You are a log analyst. Based on the retrieved log documents above, analyze and recommend relevant log ranges for the user's query.
+
+For each relevant document, output in this format:
+```
+line[X~Y] - [Description of why this range is relevant]
+```
+
+Provide helpful analysis that addresses the user's question.

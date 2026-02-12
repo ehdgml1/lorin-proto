@@ -36,6 +36,21 @@ checkpoints/
 LORIN/make_faiss/log_faiss_index_*/
 data/faiss_indices/
 
+# Data - only allow gt/ and logs/
+data/*
+!data/gt/
+!data/logs/
+
+# Baselines
+baselines/
+
+# Experiment scripts
+run_ablation_experiment.py
+run_baseline_experiment.py
+run_hallucination_experiment.py
+evaluate_baselines.py
+scripts/
+
 # Experiment results (generated at runtime)
 results/
 

@@ -292,7 +292,7 @@ poetry run python run_stage2.py \
 
 ### Step 3: Evaluate Results
 
-Calculate Coverage and Reduction metrics by comparing recommendations with ground truth.
+Calculate Coverage and Output Volume metrics by comparing recommendations with ground truth.
 
 ```bash
 poetry run python evaluate_results.py [OPTIONS]
@@ -300,15 +300,10 @@ poetry run python evaluate_results.py [OPTIONS]
 
 #### Metrics
 
-| Metric | Formula | Description |
-|--------|---------|-------------|
-| **Coverage** | `\|R̂ ∩ R*\| / \|R*\| × 100` | Percentage of ground truth covered |
-| **Reduction** | `(1 - \|R̂\| / \|Original\|) × 100` | Percentage of log reduced |
-
-Where:
-- `R̂` = Recommended line ranges
-- `R*` = Ground truth line ranges
-- `Original` = Total lines in original log
+| Metric | Description |
+|--------|-------------|
+| **Coverage** | Percentage of ground truth covered by recommended range |
+| **Output Volume** | Percentage of original log included in recommended range |
 
 #### Arguments
 
@@ -347,13 +342,13 @@ poetry run python evaluate_results.py \
     "total_cases": 20,
     "evaluated_cases": 20,
     "avg_coverage": 65.58,
-    "avg_reduction": 91.51
+    "avg_output_vol": 8.49
   },
   "cases": {
     "case_1": {
       "case_id": 1,
       "coverage": 100.0,
-      "reduction": 92.5,
+      "output_vol": 7.5,
       "recommended_lines": 400,
       "gt_lines": 150,
       "overlap_lines": 150,

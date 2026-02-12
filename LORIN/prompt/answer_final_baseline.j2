@@ -1,0 +1,27 @@
+# Log Analysis - Final Response (BASELINE - Minimal Guidance)
+
+## User's Question
+{{ user_question }}
+
+## Subquery Analysis Results
+
+{% for qid in ordered_qids %}
+### {{ qid }} Results
+{% if subanswers_by_qid[qid] %}
+{{ subanswers_by_qid[qid].output }}
+{% else %}
+(No analysis available)
+{% endif %}
+---
+{% endfor %}
+
+## Instructions
+
+Based on the subquery analysis results above, provide a final answer to the user's question.
+
+Recommend the most relevant log ranges using this format:
+```
+line[X~Y] - [Description]
+```
+
+Give clear, actionable recommendations.

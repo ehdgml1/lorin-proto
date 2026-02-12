@@ -1,0 +1,17 @@
+Case 28: ContentProvider Deadlock
+
+Warning Ranges (Phase 1-1: ContactsProvider 초기화)
+
+line[4022~4049]: ContactsProvider2 초기화, SQLite 데이터베이스 연결, 초기 쿼리 처리
+
+Escalation Ranges (Phase 1-2: 동시 접근)
+
+line[5400~5457]: 동시 DB 접근 증가, bulkInsert 작업 시작 (23개 연락처), 트랜잭션 경합 발생
+
+Critical Ranges (Phase 2: 데드락/ANR)
+
+line[6837~6873]: Transaction deadlock detected, Binder 콜백 대기, ANR 발생, 데이터베이스 접근 차단
+
+Recovery Ranges (Phase 3: 복구)
+
+line[8224~8295]: 트랜잭션 강제 완료, 데드락 해소, ContactsProvider 정상화, DB 접근 재개

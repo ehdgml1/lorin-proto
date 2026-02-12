@@ -1,0 +1,21 @@
+Case 29: GPU Texture Memory Exhaustion (OpenGL ES Out of Memory)
+
+Warning Ranges (Phase 1-1: GPU 초기화)
+
+line[7651~7677]: RenderThread/GLES 초기화, GPU 메모리 512MB heap, 텍스처 풀 초기화 (max 1024)
+
+Escalation Ranges (Phase 1-2: 텍스처 로딩)
+
+line[9721~9758]: 게임 텍스처 대량 로딩, 4K 텍스처 다수 할당, 메모리 급증 (21MB→293MB)
+
+Build-up Ranges (Phase 1-3: 메모리 압박)
+
+line[11813~11839]: 메모리 압박 시작, 사용률 70%→87%, 추가 텍스처 로딩 지속, 경고 상태 진입
+
+Critical Ranges (Phase 2: OOM)
+
+line[13883~13911]: GL_OUT_OF_MEMORY 에러 (0x0505), 텍스처 누수 감지 (256MB leaked), 게임 앱 크래시
+
+Recovery Ranges (Phase 3: 복구)
+
+line[15955~16027]: 텍스처 GC 수행, 144MB 해제, 앱 재시작, 정상 메모리 사용 복구 (21MB, 4%)

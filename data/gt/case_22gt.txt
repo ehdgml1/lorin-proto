@@ -1,0 +1,21 @@
+Case 22: HWComposer Fence Timeout (GPU Hang)
+
+Warning Ranges (Phase 1-1: 정상 Composition)
+
+line[4278~4313]: SurfaceFlinger/HWComposer 정상 composition 동작, fence 신호 정상 범위 (3-12ms), vsync 수신 안정
+
+Escalation Ranges (Phase 1-2: Fence 지연 시작)
+
+line[5464~5498]: Fence 지연 시작 (18-78ms), vsync 임계값 초과, Missed vsync deadline 경고 발생
+
+Build-up Ranges (Phase 1-3: 심각한 지연)
+
+line[6649~6683]: 심각한 fence 지연 (156-312ms), JANK 발생 (19 vsync miss), GPU 명령 대기열 정체, 렌더링 지연
+
+Critical Ranges (Phase 2: GPU Hang)
+
+line[7834~7892]: GPU hang 감지, fence timeout 3.5초, HWC2_ERROR_NO_RESOURCES, GPU reset 트리거, Settings 앱 크래시
+
+Recovery Ranges (Phase 3: 복구)
+
+line[9066~9095]: GPU reset 완료, display 복구, fence timeline 재생성, 정상 composition 재개

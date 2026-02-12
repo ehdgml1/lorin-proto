@@ -1,0 +1,21 @@
+Case 26: WiFi Interface Parameter Error
+
+Warning Ranges (Phase 1-1: WiFi 초기화)
+
+line[4174~4206]: WiFi 서비스 초기화, wpa_supplicant 시작, 초기 스캔 시작, 인터페이스 설정
+
+Escalation Ranges (Phase 1-2: 설정 변경)
+
+line[5329~5366]: WiFi 설정 변경, country code 업데이트, 채널 재설정, 연결 상태 변경
+
+Build-up Ranges (Phase 1-3: 파라미터 문제)
+
+line[6495~6510]: Firmware 로밍 설정, 인터페이스 파라미터 변경 시도, 잘못된 설정값 감지
+
+Critical Ranges (Phase 2: 인터페이스 에러)
+
+line[7622~7634]: EINVAL 에러 (scan_interval=0), OnInterfaceDisabled CONFIG_ERROR, WiFi 인터페이스 비활성화
+
+Recovery Ranges (Phase 3: 복구)
+
+line[8734~8832]: 인터페이스 재설정, wpa_supplicant 재시작, WiFi 재연결, 정상 동작 복구
